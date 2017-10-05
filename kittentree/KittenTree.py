@@ -1,78 +1,75 @@
 """ File: KittenTree.py
 Author: JJ Lim
-Date: 9/27/2017
+Date: 9/27/2017 - 10/4/2017
 
 A class dedicated to solve "Kitten on a Tree" problem from Open Kattis (https://open.kattis.com/problems/kitten).
 """
-import re
-
 def main():
+    branches = getBranches("test0.in")
+    rescuePath = getRescuePath(branches)
 
-    kitten_loc, treeDict = readTreeDict("test0.in")
-    findPath(kitten_loc, treeDict)
+    for step in rescuePath:
+        print(step, end=" ")
 
-
-def readTreeDict(inFile):
-    """
-    Reads in the input file containing the tree information.
+def getBranches(inFile):
+    """ Reads in the input file containing the tree information and returns the list containing roots (int) and their
+    branches (int list)
     :param inFile: a file containing tree information with where the Kitten is and -1 denoting the end of file.
-    :return: branch number of where the kitten is located, and
+    :return: the list containing roots (int) and their branches (int list)
      a dictionary with keys as each branch's root and values as its children
     """
-    lines = [line.rstrip('\n') for line in open(inFile)]
-    kitten_loc = lines.pop(0)
 
-    treeArray = [] #using dictionary does not seem to work...
-
-    root_ind = 0
-
-    for line in lines:
-
-        if (line == "-1"):
-            break
-        else:
-            branch = line.split(" ")
-            treeArray[root_ind] = branch[0]
-            # roots.append(branch[0])
-
-    # print(treeDict)
-    return kitten_loc, treeArray
+    with open(inFile) as f:
+        branches = []
+        for line in f:
+            line = line.split()  # to deal with blank
+            if line:  # lines (ie skip them)
+                line = [int(i) for i in line]
+                branches.append(line)
+    return branches
+    # Reading a file and converting str to int: https://stackoverflow.com/questions/12271503/python-read-numbers-from-text-file-and-put-into-list
 
 
-def findPath(kitten_loc, treeDict):
-    """Finds the rescue path for the kitten to get down from the tree to the ground.
-    :param kitten_loc: branch number of where the kitten is located
-    :param treeDict: a dictionary with keys as each branch's root and values as its children
-    :return:
+def getRescuePath(branches):
+    """ Finds the rescue path for the kitten on a tree.
+    :param branches: a list containing roots (int) and their branches (int list)
+    :return: a list of integers containing rescue path for the kitten
     """
-    tree = treeDict
+    kit_loc = branches.pop(0)[0] # get the initial location of kitten
+    branches.pop(len(branches)-1) # remove the last element, -1, which represents the end of the file
 
-    roots = treeDict.keys()
 
-    values = []
-    for value in treeDict.values():
-        while len(value) != 0:
-            values.append(value.pop())
+    rescuePath = []
+    rescuePath.append(kit_loc)
 
-    GrandRoot = "-1"
-    for root in roots:
-        if root not in values:
-            GrandRoot = root
+    cleanBranches = [] # in even numbers, roots; in odd numbers branches
+    for branch in branches:
+        cleanBranches.append(branch[0])
+        cleanBranches.append(branch[1:])
 
-    rescuePath = [kitten_loc]
-    branch = kitten_loc
+    grandRoot = getGrandRoot(cleanBranches)
 
-    while kitten_loc != GrandRoot:
-        if branch in tree.values():
-            rescuePath.append(tree.get(branch))
-            print(tree.get(branch))
-            kitten_loc = tree.get(branch)
-        #
-        # for branch in values:
-        #     if branch == kitten_loc:
-        #         rescuePath.append(tree.get(branch))
-        #         kitten_loc = tree.get(branch)
-    print(rescuePath)
+
+    while (kit_loc != grandRoot):
+        for branch in branches:
+            if kit_loc in branch[1:]:
+                kit_loc = branch[0]
+                rescuePath.append(kit_loc)
+
+
+    return rescuePath
+
+def getGrandRoot(cleanBranches):
+    """ Gets the Grand Root of the tree
+    :param cleanBranches: a list that has roots as int type and their branches as int list type
+    :return: the root of all roots and branches of the tree
+    """
+    for root in cleanBranches[::2]:
+        for branches in cleanBranches[1::2]:
+            if root in branches:
+                break
+        return root
+
 
 
 if __name__ == "__main__":
